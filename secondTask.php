@@ -21,11 +21,7 @@ while (($line = fgetcsv($file)) !== FALSE) {
 }
 fclose($file);
 
-var_dump($productsArray);
 
-// foreach(){
-    
-// }
 print "<table style='width:100%;'>";
 for($i = 0; $i < count($productsArray); $i++){
     if($i == 0) {
