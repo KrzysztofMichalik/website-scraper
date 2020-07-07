@@ -1,25 +1,23 @@
 <?php
+include('simple_html_dom.php');
 
-// headers 
-// $headers = array('Product name', 'Card url', 'Image url', 'Price', 'Number of score', 'Number of stars');
-// array of data
+
+if (file_exists('file.csv')) {
+    unlink('file.csv');
+    echo "The file has been successfully deleted";
+}
+
 $data = array(
     'ProductsTitle' =>[],
-    'UrlCard'      =>[],
+    'UrlCard'       =>[],
     'ImageSrc'      =>[],
     'Price'         =>[],
     'Score'         =>[],
     'Stars'         =>[]
 );
-// $fh = fopen("file.csv", "w");
-// fputcsv($fh, $headers);
+
 
 $content = '';
-
-ini_set("xdebug.var_display_max_children", -1);
-ini_set("xdebug.var_display_max_data", -1);
-ini_set("xdebug.var_display_max_depth", -1);
-include('simple_html_dom.php');
 
 $html = new \simple_html_dom();
 
@@ -60,12 +58,8 @@ foreach ($numberOfPages as $key => $value) {
 $html->load($content);
 $productsTitles     = $html->find('.title');
 $productsImages     = $html->find('.card-img-top');
-$imagesSrc          = [];
 $productsPrices     = $html->find('div.card-body h5');   
-$prices             = [];
 $productsScore      = $html->find('div.card-footer small');   
-$numberOfStars      = [];
-$numberOfScore      = [];
 
 // Products Title & url
 
@@ -86,7 +80,7 @@ foreach ($productsPrices as $value) {
     $price = $value->innertext;
     array_push($data['Price'], $price);    
 }
-
+// Stars & score
 foreach ($productsScore as  $value) {
     $clearTags = (strip_tags($value ));
     $array = explode(';', $clearTags);
@@ -96,58 +90,40 @@ foreach ($productsScore as  $value) {
         if($array[$i] == "&#9733") {
             $starsCounter ++;
         } elseif($i == $last_index) {
-            $res = preg_replace("/[^0-9]/", "", $array[$i] );
-            $numberOfScore[] = $res;
+            $score = preg_replace("/[^0-9]/", "", $array[$i] );
+            array_push($data['Score'], $score);
+            
         }
     }
+    array_push($data['Stars'], $starsCounter);
     
-    $numberOfStars[] = $starsCounter;
+}
+
+$outputArray = array();
+
+
+for($i=0; $i < count($data['ProductsTitle']); $i++) {
+    $array = [];
+    $array[] = $data['ProductsTitle'][$i];
+    $array[] = $data['UrlCard'][$i];
+    $array[] = $data['ImageSrc'][$i];
+    $array[] = $data['Price'][$i];
+    $array[] = $data['Score'][$i];
+    $array[] = $data['Stars'][$i];
+
+    array_push($outputArray, $array);
+
 
 }
 
 
+$output = fopen("file.csv","w");
+fputcsv($output, array('Title','Card Url','Image Url', 'Price', 'Score', 'Stars'));
 
-// header('Content-Type: text/csv');
-// header('Content-Disposition: attachment; filename="sample.csv"');
+foreach ($outputArray as $key =>$row) {
+    fputcsv($output, $row);
+  }
+  
+fclose($output);
 
-// $user_CSV[0] = array('Product name', 'Card url', 'Image url', 'Price', 'Number of score', 'Number of stars');
-
-// // very simple to increment with i++ if looping through a database result 
-
-// $user_CSV[1] = array('Quentin', 'Del Viento', 34);
-// $user_CSV[2] = array('Antoine', 'Del Torro', 55);
-// $user_CSV[3] = array('Arthur', 'Vincente', 15);
-
-// $fp = fopen('php://output', 'wb');
-// foreach ($user_CSV as $line) {
-//     // though CSV stands for "comma separated value"
-//     // in many countries (including France) separator is ";"
-//     fputcsv($fp, $line, ',');
-// }
-// fclose($fp);
-// var_dump($numberOfScore);
-
-$html->clear();
-unset($html);
-
-
-var_dump($data);
-?>
-
-
-<!-- 
-<div class="card h-100">                              
-    <a href="product.php?id=2006622791">
-        <img class="card-img-top" src="https://images-na.ssl-images-amazon.com/images/I/61s4XzZa00L._SL1010_.jpg" alt="">
-    </a>                              
-    <div class="card-body">                                  
-        <h4 class="card-title">                                      
-           <a href="product.php?id=2006622791" class="title" data-name="LG 49LH604V TV#:49 Zoll">LG 49LH604V TV#:49 Zoll</a>                                  
-        </h4>
-        <h5>$391,99</h5>
-        <p class="card-text">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Amet numquam aspernatur!</p>                              
-    </div>
-    <div class="card-footer">
-        <small class="text-muted">★★★☆☆ (2)</small>                              
-    </div> 
-</div> -->
+print 'The script has generated a file';
