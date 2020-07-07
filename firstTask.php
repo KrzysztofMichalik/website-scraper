@@ -1,10 +1,9 @@
 <?php
 include('simple_html_dom.php');
 
-
 if (file_exists('file.csv')) {
     unlink('file.csv');
-    echo "The file has been successfully deleted";
+    echo "The file has been successfully deleted \n";
 }
 
 $data = array(
@@ -16,44 +15,56 @@ $data = array(
     'Stars'         =>[]
 );
 
-
 $content = '';
 
 $html = new \simple_html_dom();
 
-function connection(string $url) : string
-{
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    try {        
-        $response = curl_exec($ch);
-        curl_close($ch);
-        return $response;
-    } catch (Exception $e){
-        return $e->getMessage();
+
+$files = glob('html/*.{html}', GLOB_BRACE);
+
+
+if (empty($files)) {
+    function connection(string $url) : string
+    {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        try {        
+            $response = curl_exec($ch);
+            curl_close($ch);
+            return $response;
+        } catch (Exception $e){
+            return $e->getMessage();
+        }
+    }
+
+    $response = connection("http://estoremedia.space/DataIT/");
+    $html->load($response);
+    $numberOfPages = $html->find('li.page-item a');
+
+
+    foreach ($numberOfPages as $key => $value) {
+        if($key < count($numberOfPages) - 1) {
+            $pageNo = strip_tags($value);       
+            $link = 'http://estoremedia.space/DataIT/' . 'index.php?page=' . $pageNo .'#';         
+            $response = connection($link);
+            $content.= $response;
+        }
+    }
+    
+} else {
+
+    $files = glob('html/*.{html}', GLOB_BRACE);
+    
+    foreach ($files as $file) {
+        $content .= file_get_contents($file);
     }
 }
-
-$response = connection("http://estoremedia.space/DataIT/");
-$html->load($response);
-
-
 /*
 * get content of all pages.
 */
-$numberOfPages = $html->find('li.page-item a');
 
-
-foreach ($numberOfPages as $key => $value) {
-    if($key < count($numberOfPages) - 1) {
-        $pageNo = strip_tags($value);       
-        $link = 'http://estoremedia.space/DataIT/' . 'index.php?page=' . $pageNo .'#';         
-        $response = connection($link);
-        $content.= $response;
-    }
-}
 
 $html->load($content);
 $productsTitles     = $html->find('.title');
