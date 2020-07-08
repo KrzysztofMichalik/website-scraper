@@ -3,7 +3,7 @@ $( document ).ready(function() {
         var link = $(this).data('link');
         $.ajax({
             method: "POST",
-            url: "detailsProductGate.php",
+            url: "./detailsProduct.php",
             data: {
                 source: link
             }
